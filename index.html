@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>技術科クイズ</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="start">
+
+<h1>技術科 期末テスト対策クイズ</h1>
+
+<p>問題数を選択してください</p>
+
+<button onclick="startQuiz(5)">5問</button>
+<button onclick="startQuiz(10)">10問</button>
+<button onclick="startQuiz(15)">15問</button>
+
+</div>
+
+<div id="quiz" style="display:none;">
+
+<h2 id="count"></h2>
+
+<h3 id="question"></h3>
+
+<div id="choices"></div>
+
+<div id="result"></div>
+
+</div>
+
+<div id="finish" style="display:none;">
+
+<h2>結果発表</h2>
+
+<p id="score"></p>
+
+<button onclick="reviewWrong()">
+間違えた問題を復習
+</button>
+
+<button onclick="location.reload()">
+トップへ戻る
+</button>
+
+</div>
+
+</div>
+
+<script src="questions.js"></script>
+
+<script>
+
+let questions = [];
+let current = 0;
+let total = 0;
+let score = 0;
+
+let wrongQuestions = [];
+
+function shuffleChoices(question){
+
+    const choices = question.c.map((choice,index)=>({
+        text: choice,
+        correct: index === question.a
+    }));
+
+    choices.sort(() => Math.random() - 0.5);
+
+    question.c = choices.map(x => x.text);
+    question.a = choices.findIndex(x => x.correct);
+
+    return question;
+}
+function shuffle(arr){
+    return arr.sort(() => Math.random() - 0.5);
+}
+
+function startQuiz(num){
+
+    current=0;
+    score=0;
+    wrongQuestions=[];
+
+    total=num;
+
+questions =
+    shuffle([...questionPool])
+    .slice(0, num)
+    .map(q => shuffleChoices({...q}));
+
+    document.getElementById("start").style.display="none";
+    document.getElementById("quiz").style.display="block";
+
+    showQuestion();
+}
+
+function showQuestion(){
+
+    document.getElementById("result").innerHTML="";
+
+    const q=questions[current];
+
+    document.getElementById("count").innerHTML=
+        `${current+1} / ${total}`;
+
+    document.getElementById("question").innerHTML=
+        q.q;
+
+    let html="";
+
+    q.c.forEach((choice,index)=>{
+
+        html += `
+        <button
+          class="choice"
+          onclick="answer(${index})">
+            ${choice}
+        </button>
+        `;
+    });
+
+    document.getElementById("choices").innerHTML=html;
+}
+
+function answer(index){
+
+    const q=questions[current];
+
+    let html="";
+
+    if(index===q.a){
+
+        score++;
+
+        html=
+        `
+        <p class="correct">
+        ○ 正解！
+        </p>
+
+        <div class="explanation">
+        ${q.e}
+        </div>
+        `;
+    }
+    else{
+
+        wrongQuestions.push(q);
+
+        html=
+        `
+        <p class="wrong">
+        × 不正解
+        </p>
+
+        <p>
+        正解：
+        <strong>${q.c[q.a]}</strong>
+        </p>
+
+        <div class="explanation">
+        ${q.e}
+        </div>
+        `;
+    }
+
+    document.getElementById("choices").innerHTML="";
+    document.getElementById("result").innerHTML=html;
+
+    setTimeout(()=>{
+
+        current++;
+
+        if(current>=total){
+
+            finishQuiz();
+
+        }else{
+
+            showQuestion();
+        }
+
+    },3000);
+}
+
+function finishQuiz(){
+
+    document.getElementById("quiz").style.display="none";
+    document.getElementById("finish").style.display="block";
+
+    const rate=
+      Math.round(score/total*100);
+
+    let rank="";
+
+    if(rate>=90){
+
+        rank="🏆 すばらしい！";
+
+    }else if(rate>=80){
+
+        rank="🎉 合格！";
+
+    }else{
+
+        rank="📚 復習しよう！";
+    }
+
+    document.getElementById("score").innerHTML=
+    `
+    正解数：${score}/${total}<br><br>
+    正答率：${rate}%<br><br>
+    ${rank}
+    `;
+}
+
+function reviewWrong(){
+
+    if(wrongQuestions.length===0){
+
+        alert("全問正解です！");
+        return;
+    }
+
+    questions =
+    wrongQuestions.map(q =>
+        shuffleChoices({...q})
+    );
+
+    total=questions.length;
+
+    current=0;
+    score=0;
+
+    wrongQuestions=[];
+
+    document.getElementById("finish").style.display="none";
+    document.getElementById("quiz").style.display="block";
+
+    showQuestion();
+}
+
+</script>
+
+</body>
+</html>
